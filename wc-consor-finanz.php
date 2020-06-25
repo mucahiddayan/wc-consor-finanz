@@ -42,7 +42,6 @@ function wc_consor_finanz_init_gateway_class()
     public function __construct()
     {
       $this->id = 'wc_consor_finanz'; // payment gateway plugin ID
-      $this->icon = ''; // URL of the icon that will be displayed on checkout page near your gateway name
       $this->has_fields = false; // in case you need a custom credit card form
       $this->method_title = 'WooCommerce Consor Finanz Extension';
       $this->method_description =
@@ -63,7 +62,8 @@ function wc_consor_finanz_init_gateway_class()
       $this->enabled = $this->get_option('enabled');
       $this->testmode = 'yes' === $this->get_option('testmode');
       $this->apiUrl = $this->get_option('api_url');
-      $this->icon = $this->get_option('icon_url');
+      $this->icon = plugin_dir_url(__FILE__) . 'assets/consors_finanz_logo.jpg';
+      $this->defaultduration = $this->get_option('defaultduration');
 
       // This action hook saves the settings
       add_action(
@@ -100,7 +100,7 @@ function wc_consor_finanz_init_gateway_class()
         ),
         'defaultduration' => array(
           'title' => 'Anzahl der Raten',
-          'type' => 'text',
+          'type' => 'range',
           'description' => 'Standardwert fuer Anzahl der Raten',
           'default' => '12',
           'desc_tip' => true
@@ -124,25 +124,9 @@ function wc_consor_finanz_init_gateway_class()
         'description' => array(
           'title' => 'Description',
           'type' => 'textarea',
-          'description' =>
-            'This controls the description which the user sees during checkout.',
+          'description' => 'Description',
+
           'default' => 'Pay with Consor Finanz'
-        ),
-        // 'price_after_text' => array(
-        //   'title' => 'Preisberechnungshinweis',
-        //   'type' => 'textarea',
-        //   'description' => 'Dieser Text wird nach Preistext eingefuegt',
-        //   'default' => 'Möglicher Finanzierungsplan:
-        //   36 Monatsraten à € 28,78*
-        //   9,47% Sollzinsen für 36 Monate*
-        //   andere Laufzeiten möglich'
-        // ),
-        'icon_url' => array(
-          'title' => 'Icon URL',
-          'type' => 'text',
-          'description' => 'Icon Url',
-          'default' => '',
-          'desc_tip' => true
         )
       );
     }
@@ -165,17 +149,19 @@ function wc_consor_finanz_init_gateway_class()
         'cancelURL' => '',
         'failureURL' => '',
         //personal informations
-        'salutation' => '',
+        'salutation' => 'herr',
         'firstname' => $billing['first_name'],
         'lastname' => $billing['last_name'],
         'birthdate' => '',
         'phone' => $billing['phone'],
         'mobil' => '',
         'email' => $billing['email'],
-        'street' => $billing['address_1'],
+        'street' => $billing['address_1'] . ' ' . $billing['address_2'],
         'zip' => $billing['postcode'],
         'city' => $billing['city'],
-        'shopbrandname' => 'Kazimin Dukkabi'
+        'shopbrandname' => get_bloginfo('name'),
+        'shoplogoURL' => get_custom_logo_url(),
+        'defaultduration' => $this->defaultduration
       );
 
       $url = add_query_arg($data, $this->apiUrl);
@@ -204,6 +190,23 @@ function wc_consor_finanz_init_gateway_class()
       wp_enqueue_script(
         'finanzierung_rechner_js',
         plugin_dir_url(__FILE__) . 'assets/main.js',
+        array('jquery'),
+        '1.0.0'
+      );
+    }
+
+    //  functions to extend functionality of wordpress/woocommerce
+    public static function load_admin_styles_and_scripts()
+    {
+      wp_enqueue_style(
+        'finanzierung_rechner_style',
+        plugin_dir_url(__FILE__) . 'assets/admin-style.css',
+        null,
+        '1.0.0'
+      );
+      wp_enqueue_script(
+        'finanzierung_rechner_js',
+        plugin_dir_url(__FILE__) . 'assets/admin-main.js',
         array('jquery'),
         '1.0.0'
       );
@@ -269,6 +272,11 @@ add_action('wp_enqueue_scripts', array(
   'load_styles_and_scripts'
 ));
 
+add_action('admin_enqueue_scripts', array(
+  'WC_Consor_Finanz',
+  'load_admin_styles_and_scripts'
+));
+
 add_action('woocommerce_after_cart', array(
   'WC_Consor_Finanz',
   'consor_finanz_calculator'
@@ -311,4 +319,11 @@ function get_month($price)
     $month -= 6;
   }
   return $month;
+}
+
+function get_custom_logo_url()
+{
+  $custom_logo_id = get_theme_mod('custom_logo');
+  $url = wp_get_attachment_url($custom_logo_id);
+  return $url;
 }
