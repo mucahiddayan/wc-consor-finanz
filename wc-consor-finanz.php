@@ -219,7 +219,7 @@ function wc_consor_finanz_init_gateway_class()
     {
       $rawPrice = priceToFloat($price);
       $month = get_month($rawPrice);
-      $pricePerMonth = $rawPrice / $month;
+      $pricePerMonth = number_format((float) ($rawPrice / $month), 2, '.', '');
       return $rawPrice >= 54
         ? "
       <div class=\"consor-finanz__charging-hint\">
