@@ -346,7 +346,12 @@ var initLegalText;
 })(window, window.jQuery);
 
 jQuery(function($) {
-  var productPrice = false;
+  var productPrice = parseFloat(
+    document
+      .querySelector(".woocommerce-Price-amount.amount")
+      .innerText.replace(/[^\w,]/g, "")
+      .replace(",", ".")
+  );
 
   $("#calculator").calculator({
     minMonth: 6,

@@ -31,9 +31,9 @@ function addRangeEventListener() {
 }
 
 function addMissingAttributesToRangeInput() {
-  rangeInput.setAttribute("max", 72);
+  rangeInput.setAttribute("max", 48);
   rangeInput.setAttribute("min", 6);
-  rangeInput.setAttribute("step", 2);
+  rangeInput.setAttribute("step", 6);
 }
 
 async function main() {
