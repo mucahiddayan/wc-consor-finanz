@@ -173,7 +173,7 @@ function wc_consor_finanz_init_gateway_class()
      */
     public function notify()
     {
-      echo 'laa';
+      return json_encode(array('message' => 'holla'));
     }
 
     //  functions to extend functionality of wordpress/woocommerce
@@ -208,6 +208,11 @@ function wc_consor_finanz_init_gateway_class()
         array('jquery'),
         '1.0.0'
       );
+    }
+
+    public static function is_consor_finanz($gateway)
+    {
+      return !strcmp($gateway, (new self())->id);
     }
 
     public static function cw_change_product_price_display($price)

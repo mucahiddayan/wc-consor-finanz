@@ -2059,7 +2059,7 @@ fieldset[disabled] .calculator .radio label {
 }
 
 .wc_payment_method.payment_method_wc_consor_finanz label {
-  display: flex;
+  display: flex !important;
   align-items: center;
 }
 

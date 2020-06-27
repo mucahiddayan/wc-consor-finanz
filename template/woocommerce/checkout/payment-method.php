@@ -18,10 +18,12 @@
 if (!defined('ABSPATH')) {
   exit();
 } ?>
-<li class="wc_payment_method payment_method_<?php echo esc_attr(
-  $gateway->id
-); ?>">
-<div class="consor-finanz-options-box">
+<li class="wc_payment_method payment_method_<?php
+echo esc_attr($gateway->id);
+echo WC_Consor_Finanz::is_consor_finanz($gateway->id)
+  ? ' wp-consor-finanz-box'
+  : '';
+?>">
 	<input id="payment_method_<?php echo esc_attr(
    $gateway->id
  ); ?>" type="radio" class="input-radio" name="payment_method" value="<?php echo esc_attr(
@@ -33,14 +35,23 @@ if (!defined('ABSPATH')) {
    $gateway->order_button_text
  ); ?>" />
 
-	<label for="payment_method_<?php echo esc_attr($gateway->id); ?>">
- <?php echo $gateway->get_icon();
-/* phpcs:ignore WordPress.XSS.EscapeOutput.OutputNotEscaped */
-?>
+	<label  for="payment_method_<?php echo esc_attr($gateway->id); ?>">
+		<?php echo !WC_Consor_Finanz::is_consor_finanz($gateway->id)
+    ? $gateway->get_title()
+    : ''; ?> <?php echo $gateway->get_icon(); ?>
 	</label>
-  </div>
-<?php
-global $woocommerce;
-echo WC_Consor_Finanz::price_after_text($woocommerce->cart->get_cart_total());
-?>
+	<?php if ($gateway->has_fields() || $gateway->get_description()): ?>
+		<div class="payment_box payment_method_<?php echo esc_attr(
+    $gateway->id
+  ); ?>" <?php if (!$gateway->chosen): ?>style="display:none;"<?php endif; ?>>
+      <?php
+      global $woocommerce;
+      echo WC_Consor_Finanz::is_consor_finanz($gateway->id)
+        ? WC_Consor_Finanz::price_after_text(
+          $woocommerce->cart->get_cart_total()
+        )
+        : $gateway->payment_fields();
+      ?>
+		</div>
+	<?php endif; ?>
 </li>
