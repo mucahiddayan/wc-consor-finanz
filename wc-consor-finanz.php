@@ -56,7 +56,7 @@ function wc_consor_finanz_init_gateway_class()
 
       // Load the settings.
       $this->init_settings();
-      $this->title = $this->get_option('title');
+      $this->title = '' /* $this->get_option('title') */;
       $this->vendorId = $this->get_option('vendor_id');
       $this->description = $this->get_option('description');
       $this->enabled = $this->get_option('enabled');
@@ -72,10 +72,7 @@ function wc_consor_finanz_init_gateway_class()
       );
 
       // You can also register a webhook here
-      add_action('woocommerce_api_wc_consor_finanz_result', array(
-        $this,
-        'webhook'
-      ));
+      add_action('woocommerce_api_' . $this->id, array($this, 'notify'));
     }
 
     /**
@@ -113,21 +110,20 @@ function wc_consor_finanz_init_gateway_class()
           'default' =>
             'https://finanzieren.consorsfinanz.de/web/ecommerce/gewuenschte-rate',
           'desc_tip' => true
-        ),
-        'title' => array(
-          'title' => 'Title',
-          'type' => 'text',
-          'description' => 'This title will be shown in checkout page',
-          'default' => 'Consor Finanz Ratenzahlung',
-          'desc_tip' => true
-        ),
-        'description' => array(
-          'title' => 'Description',
-          'type' => 'textarea',
-          'description' => 'Description',
-
-          'default' => 'Pay with Consor Finanz'
         )
+        // 'title' => array(
+        //   'title' => 'Title',
+        //   'type' => 'text',
+        //   'description' => 'This title will be shown in checkout page',
+        //   'default' => 'Consor Finanz Ratenzahlung',
+        //   'desc_tip' => true
+        // ),
+        // 'description' => array(
+        //   'title' => 'Description',
+        //   'type' => 'textarea',
+        //   'description' => 'Description',
+        //   'default' => 'Finanzierung mit Consor'
+        // )
       );
     }
 
@@ -140,15 +136,15 @@ function wc_consor_finanz_init_gateway_class()
       $order_data = $order->get_data();
       $billing = $order_data['billing'];
 
-      // echo '<script>console.log("' . woocommerce_page_title() . '")</script>';
       $data = array(
         'vendorid' => $this->vendorId,
         'order_amount' => $woocommerce->cart->total,
         'order_id' => $order_id,
         'successURL' => urlencode($this->get_return_url($order)),
-        'cancelURL' => '',
+        'cancelURL' => urlencode($order->get_cancel_order_url_raw()),
         'failureURL' => '',
-        //personal informations
+        'notifyURL' => home_url() . '?wc-api=' . strtoupper($this->id),
+        //customer informations
         'salutation' => 'herr',
         'firstname' => $billing['first_name'],
         'lastname' => $billing['last_name'],
@@ -165,6 +161,7 @@ function wc_consor_finanz_init_gateway_class()
       );
 
       $url = add_query_arg($data, $this->apiUrl);
+
       return array(
         'redirect' => $url,
         'result' => 'success'
@@ -174,8 +171,9 @@ function wc_consor_finanz_init_gateway_class()
     /*
      * In case you need a webhook, like PayPal IPN etc
      */
-    public function webhook()
+    public function notify()
     {
+      echo 'laa';
     }
 
     //  functions to extend functionality of wordpress/woocommerce
@@ -277,25 +275,25 @@ add_action('admin_enqueue_scripts', array(
   'load_admin_styles_and_scripts'
 ));
 
-add_action('woocommerce_after_cart', array(
-  'WC_Consor_Finanz',
-  'consor_finanz_calculator'
-));
+// add_action('woocommerce_after_cart', array(
+//   'WC_Consor_Finanz',
+//   'consor_finanz_calculator'
+// ));
 
-add_filter('woocommerce_get_price_html', array(
-  'WC_Consor_Finanz',
-  'cw_change_product_price_display'
-));
+// add_filter('woocommerce_get_price_html', array(
+//   'WC_Consor_Finanz',
+//   'cw_change_product_price_display'
+// ));
 
-add_filter('woocommerce_cart_item_price', array(
-  'WC_Consor_Finanz',
-  'cw_change_product_price_display'
-));
+// add_filter('woocommerce_cart_item_price', array(
+//   'WC_Consor_Finanz',
+//   'cw_change_product_price_display'
+// ));
 
-add_filter('woocommerce_cart_totals_order_total_html', array(
-  'WC_Consor_Finanz',
-  'cart_totals_order_total_html'
-));
+// add_filter('woocommerce_cart_totals_order_total_html', array(
+//   'WC_Consor_Finanz',
+//   'cart_totals_order_total_html'
+// ));
 
 function priceToFloat($s)
 {
@@ -326,4 +324,34 @@ function get_custom_logo_url()
   $custom_logo_id = get_theme_mod('custom_logo');
   $url = wp_get_attachment_url($custom_logo_id);
   return $url;
+}
+
+// override default templates
+add_filter('woocommerce_locate_template', 'woo_adon_plugin_template', 1, 3);
+function woo_adon_plugin_template($template, $template_name, $template_path)
+{
+  global $woocommerce;
+  $_template = $template;
+  if (!$template_path) {
+    $template_path = $woocommerce->template_url;
+  }
+
+  $plugin_path =
+    untrailingslashit(plugin_dir_path(__FILE__)) . '/template/woocommerce/';
+
+  // Look within passed path within the theme - this is priority
+  $template = locate_template(array(
+    $template_path . $template_name,
+    $template_name
+  ));
+
+  if (!$template && file_exists($plugin_path . $template_name)) {
+    $template = $plugin_path . $template_name;
+  }
+
+  if (!$template) {
+    $template = $_template;
+  }
+
+  return $template;
 }

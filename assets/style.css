@@ -2057,3 +2057,18 @@ fieldset[disabled] .calculator .radio label {
 .consor-finanz__debit {
   font-size: 12px;
 }
+
+.wc_payment_method.payment_method_wc_consor_finanz label {
+  display: flex;
+  align-items: center;
+}
+
+.wc_payment_method.payment_method_wc_consor_finanz label img {
+  max-width: 50%;
+}
+
+.wc_payment_method.payment_method_wc_consor_finanz
+  input.input-radio[name="payment_method"]
+  + label::before {
+  min-width: 14px;
+}
