@@ -17,6 +17,7 @@
  */
 
 defined('ABSPATH') or die('No script kiddies please!');
+require_once 'assets/helper.php';
 
 /*
  * This action hook registers our PHP class as a WooCommerce payment gateway
@@ -64,6 +65,7 @@ function wc_consor_finanz_init_gateway_class()
       $this->apiUrl = $this->get_option('api_url');
       $this->icon = plugin_dir_url(__FILE__) . 'assets/consors_finanz_logo.jpg';
       $this->defaultduration = $this->get_option('defaultduration');
+      $this->hash_key = $this->get_option('hash_key');
 
       // This action hook saves the settings
       add_action(
@@ -72,7 +74,10 @@ function wc_consor_finanz_init_gateway_class()
       );
 
       // You can also register a webhook here
-      add_action('woocommerce_api_' . $this->id, array($this, 'notify'));
+      add_action('woocommerce_api_' . $this->id, array(
+        $this,
+        'notifier_callback'
+      ));
     }
 
     /**
@@ -109,6 +114,14 @@ function wc_consor_finanz_init_gateway_class()
           'description' => 'Consor Finanz Api Url',
           'default' =>
             'https://finanzieren.consorsfinanz.de/web/ecommerce/gewuenschte-rate',
+          'desc_tip' => true
+        ),
+        'hash_key' => array(
+          'title' => 'Hash Key',
+          'type' => 'text',
+          'description' =>
+            'Hash Key für sichere Kommunikation. (Dieser Key wird bei der Freigabe von Consors Finanz übersandt)',
+          'default' => '',
           'desc_tip' => true
         )
         // 'title' => array(
@@ -168,12 +181,63 @@ function wc_consor_finanz_init_gateway_class()
       );
     }
 
+    public function is_valid_hash($to_check)
+    {
+      $data = WP_Consor_Finanz_Helper::remove_query_parameter_from_url(
+        home_url() . $_SERVER['REQUEST_URI'],
+        'hash'
+      );
+      $hashed_data = strtoupper(hash_hmac('sha512', $data, $this->hash_key));
+      return hash_equals($hashed_data, strtoupper($to_check));
+    }
+
     /*
      * In case you need a webhook, like PayPal IPN etc
      */
-    public function notify()
+    public function notifier_callback()
     {
-      return json_encode(array('message' => 'holla'));
+      $hash = WP_Consor_Finanz_Helper::get_parameter_from_request('hash');
+
+      if ($this->is_valid_hash($hash)) {
+        $status = WP_Consor_Finanz_Helper::get_parameter_from_request('status');
+        $status_detail = WP_Consor_Finanz_Helper::get_parameter_from_request(
+          'status_detail'
+        );
+        $order_id = WP_Consor_Finanz_Helper::get_parameter_from_request(
+          'order_id'
+        );
+        $transaction_id = WP_Consor_Finanz_Helper::get_parameter_from_request(
+          'transaction_id'
+        );
+        $duration = WP_Consor_Finanz_Helper::get_parameter_from_request(
+          'duration'
+        );
+        $creditAmount = WP_Consor_Finanz_Helper::get_parameter_from_request(
+          'creditAmount'
+        );
+
+        // ignore statuses 'proposal' and 'sucess'
+        $order = wc_get_order($order_id);
+        if ($order) {
+          if (equal($status, 'error')) {
+            $order->cancel_order();
+          }
+          if (equal($status, 'accepted')) {
+            $order->payment_complete();
+            wc_reduce_stock_levels($order_id);
+          }
+
+          // if (
+          //   equal($status_detail, 'CANCELLED') ||
+          //   equal($status_detail, 'DECLINED')
+          // ) {
+          //   $order->cancel_order();
+          //   wp_redirect($order->get_cancel_order_url());
+          // }
+        } else {
+          echo 'There is no order with this id ' . $order_id;
+        }
+      }
     }
 
     //  functions to extend functionality of wordpress/woocommerce
@@ -227,12 +291,14 @@ function wc_consor_finanz_init_gateway_class()
       $month = get_month($rawPrice);
       $pricePerMonth = number_format((float) ($rawPrice / $month), 2, '.', '');
       return $rawPrice >= 54
-        ? "
+        ? wp_nonce_url('/?wc-api=') .
+            "
       <div class=\"consor-finanz__charging-hint\">
       <i><b>Möglicher Finanzierungsplan:</b></i>
       <span>$month Monatsraten à € $pricePerMonth*</span>
       <span class=\"consor-finanz__debit\">(*) 0% Sollzinsen für 36 Monate</span>
-      </div>" . PHP_EOL
+      </div>" .
+            PHP_EOL
         : 'Finanzierung ist erst ab einem Einkaufswert von 54 Euro moeglich!';
     }
 
@@ -300,63 +366,10 @@ add_action('admin_enqueue_scripts', array(
 //   'cart_totals_order_total_html'
 // ));
 
-function priceToFloat($s)
-{
-  // convert "," to "."
-  $s = str_replace(',', '.', $s);
-
-  // remove everything except numbers and dot "."
-  $s = preg_replace("/[^0-9\.]/", "", $s);
-
-  // remove all seperators from first part and keep the end
-  $s = str_replace('.', '', substr($s, 0, -3)) . substr($s, -3);
-
-  // return float
-  return (float) $s;
-}
-
-function get_month($price)
-{
-  $month = 36;
-  while ($price / 9 < $month) {
-    $month -= 6;
-  }
-  return $month;
-}
-
-function get_custom_logo_url()
-{
-  $custom_logo_id = get_theme_mod('custom_logo');
-  $url = wp_get_attachment_url($custom_logo_id);
-  return $url;
-}
-
 // override default templates
-add_filter('woocommerce_locate_template', 'woo_adon_plugin_template', 1, 3);
-function woo_adon_plugin_template($template, $template_name, $template_path)
-{
-  global $woocommerce;
-  $_template = $template;
-  if (!$template_path) {
-    $template_path = $woocommerce->template_url;
-  }
-
-  $plugin_path =
-    untrailingslashit(plugin_dir_path(__FILE__)) . '/template/woocommerce/';
-
-  // Look within passed path within the theme - this is priority
-  $template = locate_template(array(
-    $template_path . $template_name,
-    $template_name
-  ));
-
-  if (!$template && file_exists($plugin_path . $template_name)) {
-    $template = $plugin_path . $template_name;
-  }
-
-  if (!$template) {
-    $template = $_template;
-  }
-
-  return $template;
-}
+add_filter(
+  'woocommerce_locate_template',
+  array('WP_Consor_Finanz_Helper', 'override_woocommerce_templates'),
+  1,
+  3
+);
