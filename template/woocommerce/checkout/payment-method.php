@@ -39,19 +39,24 @@ echo WC_Consor_Finanz::is_consor_finanz($gateway->id)
 		<?php echo !WC_Consor_Finanz::is_consor_finanz($gateway->id)
     ? $gateway->get_title()
     : ''; ?> <?php echo $gateway->get_icon(); ?>
-	</label>
-	<?php if ($gateway->has_fields() || $gateway->get_description()): ?>
+  </label>
+  <?php if (WC_Consor_Finanz::is_consor_finanz($gateway->id)): ?>
+    <div class="payment_box payment_method_<?php echo esc_attr(
+      $gateway->id
+    ); ?>" <?php if (!$gateway->chosen): ?>style="display:none;"<?php endif; ?>>
+<?php
+global $woocommerce;
+echo WC_Consor_Finanz::price_after_text($woocommerce->cart->get_cart_total());
+?>
+    </div>
+  <?php else:if (
+      ($gateway->has_fields() || $gateway->get_description()) &&
+      !WC_Consor_Finanz::is_consor_finanz($gateway->id)
+    ): ?>
 		<div class="payment_box payment_method_<?php echo esc_attr(
     $gateway->id
   ); ?>" <?php if (!$gateway->chosen): ?>style="display:none;"<?php endif; ?>>
-      <?php
-      global $woocommerce;
-      echo WC_Consor_Finanz::is_consor_finanz($gateway->id)
-        ? WC_Consor_Finanz::price_after_text(
-          $woocommerce->cart->get_cart_total()
-        )
-        : $gateway->payment_fields();
-      ?>
+      <?php $gateway->payment_fields(); ?>
 		</div>
-	<?php endif; ?>
+  <?php endif;endif; ?>
 </li>

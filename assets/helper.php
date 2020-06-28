@@ -1,6 +1,6 @@
 <?php
 
-class WP_Consor_Finanz_Helper
+class WC_Consor_Finanz_Helper
 {
   public static function get_parameter_from_request($param)
   {
@@ -106,7 +106,8 @@ class WP_Consor_Finanz_Helper
     }
 
     $plugin_path =
-      untrailingslashit(plugin_dir_path(__FILE__)) . '/template/woocommerce/';
+      untrailingslashit(dirname(plugin_dir_path(__FILE__))) .
+      '/template/woocommerce/';
 
     // Look within passed path within the theme - this is priority
     $template = locate_template(array(

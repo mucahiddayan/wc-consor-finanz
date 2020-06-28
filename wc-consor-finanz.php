@@ -183,7 +183,7 @@ function wc_consor_finanz_init_gateway_class()
 
     public function is_valid_hash($to_check)
     {
-      $data = WP_Consor_Finanz_Helper::remove_query_parameter_from_url(
+      $data = WC_Consor_Finanz_Helper::remove_query_parameter_from_url(
         home_url() . $_SERVER['REQUEST_URI'],
         'hash'
       );
@@ -196,23 +196,23 @@ function wc_consor_finanz_init_gateway_class()
      */
     public function notifier_callback()
     {
-      $hash = WP_Consor_Finanz_Helper::get_parameter_from_request('hash');
+      $hash = WC_Consor_Finanz_Helper::get_parameter_from_request('hash');
 
       if ($this->is_valid_hash($hash)) {
-        $status = WP_Consor_Finanz_Helper::get_parameter_from_request('status');
-        $status_detail = WP_Consor_Finanz_Helper::get_parameter_from_request(
+        $status = WC_Consor_Finanz_Helper::get_parameter_from_request('status');
+        $status_detail = WC_Consor_Finanz_Helper::get_parameter_from_request(
           'status_detail'
         );
-        $order_id = WP_Consor_Finanz_Helper::get_parameter_from_request(
+        $order_id = WC_Consor_Finanz_Helper::get_parameter_from_request(
           'order_id'
         );
-        $transaction_id = WP_Consor_Finanz_Helper::get_parameter_from_request(
+        $transaction_id = WC_Consor_Finanz_Helper::get_parameter_from_request(
           'transaction_id'
         );
-        $duration = WP_Consor_Finanz_Helper::get_parameter_from_request(
+        $duration = WC_Consor_Finanz_Helper::get_parameter_from_request(
           'duration'
         );
-        $creditAmount = WP_Consor_Finanz_Helper::get_parameter_from_request(
+        $creditAmount = WC_Consor_Finanz_Helper::get_parameter_from_request(
           'creditAmount'
         );
 
@@ -287,18 +287,16 @@ function wc_consor_finanz_init_gateway_class()
 
     public static function price_after_text($price)
     {
-      $rawPrice = priceToFloat($price);
-      $month = get_month($rawPrice);
+      $rawPrice = WC_Consor_Finanz_Helper::priceToFloat($price);
+      $month = WC_Consor_Finanz_Helper::get_month($rawPrice);
       $pricePerMonth = number_format((float) ($rawPrice / $month), 2, '.', '');
       return $rawPrice >= 54
-        ? wp_nonce_url('/?wc-api=') .
-            "
+        ? "
       <div class=\"consor-finanz__charging-hint\">
       <i><b>Möglicher Finanzierungsplan:</b></i>
       <span>$month Monatsraten à € $pricePerMonth*</span>
       <span class=\"consor-finanz__debit\">(*) 0% Sollzinsen für 36 Monate</span>
-      </div>" .
-            PHP_EOL
+      </div>" . PHP_EOL
         : 'Finanzierung ist erst ab einem Einkaufswert von 54 Euro moeglich!';
     }
 
@@ -369,7 +367,7 @@ add_action('admin_enqueue_scripts', array(
 // override default templates
 add_filter(
   'woocommerce_locate_template',
-  array('WP_Consor_Finanz_Helper', 'override_woocommerce_templates'),
+  array('WC_Consor_Finanz_Helper', 'override_woocommerce_templates'),
   1,
   3
 );
