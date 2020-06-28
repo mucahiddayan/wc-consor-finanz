@@ -169,7 +169,7 @@ function wc_consor_finanz_init_gateway_class()
         'zip' => $billing['postcode'],
         'city' => $billing['city'],
         'shopbrandname' => get_bloginfo('name'),
-        'shoplogoURL' => get_custom_logo_url(),
+        'shoplogoURL' => WC_Consor_Finanz_Helper::get_custom_logo_url(),
         'defaultduration' => $this->defaultduration
       );
 
@@ -232,7 +232,6 @@ function wc_consor_finanz_init_gateway_class()
           //   equal($status_detail, 'DECLINED')
           // ) {
           //   $order->cancel_order();
-          //   wp_redirect($order->get_cancel_order_url());
           // }
         } else {
           echo 'There is no order with this id ' . $order_id;
@@ -344,6 +343,13 @@ add_action('admin_enqueue_scripts', array(
   'load_admin_styles_and_scripts'
 ));
 
+add_filter(
+  'woocommerce_locate_template',
+  array('WC_Consor_Finanz_Helper', 'override_woocommerce_templates'),
+  1,
+  3
+);
+
 // add_action('woocommerce_after_cart', array(
 //   'WC_Consor_Finanz',
 //   'consor_finanz_calculator'
@@ -365,9 +371,3 @@ add_action('admin_enqueue_scripts', array(
 // ));
 
 // override default templates
-add_filter(
-  'woocommerce_locate_template',
-  array('WC_Consor_Finanz_Helper', 'override_woocommerce_templates'),
-  1,
-  3
-);
