@@ -3,7 +3,7 @@
  * Plugin Name: WooCommerce Consors Finanz Extension
  * Plugin URI: https://dayan.one
  * Description: Consors Finanz  Plugin for WooCommerce.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Mücahid Dayan
  * Author URI: https://mücahiddayan.com/
  * Developer: Mücahid Dayan
@@ -371,3 +371,10 @@ add_filter(
 // ));
 
 // override default templates
+
+require_once 'vendor/plugin-update-checker-4.9/plugin-update-checker.php';
+$myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
+  plugin_dir_url(__FILE__) . 'assets/details.json',
+  __FILE__, //Full path to the main plugin file or functions.php.
+  'wc_consor_finanz'
+);
