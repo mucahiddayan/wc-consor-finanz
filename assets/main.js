@@ -351,11 +351,13 @@ var initLegalText;
 })(window, window.jQuery);
 
 jQuery(function($) {
+  const price =
+    document.querySelector(
+      ".summary .price ins .woocommerce-Price-amount.amount"
+    ) ||
+    document.querySelector(".summary .price  .woocommerce-Price-amount.amount");
   var productPrice = parseFloat(
-    document
-      .querySelector(".woocommerce-Price-amount.amount")
-      .innerText.replace(/[^\w,]/g, "")
-      .replace(",", ".")
+    price.innerText.replace(/[^\w,]/g, "").replace(",", ".")
   );
 
   $("#calculator").calculator({
