@@ -355,8 +355,8 @@ jQuery(function($) {
     document.querySelector(
       ".summary .price ins .woocommerce-Price-amount.amount"
     ) ||
-    document.querySelector(".summary .price  .woocommerce-Price-amount.amount");
-  var productPrice = parseFloat(
+    document.querySelector(".summary .price .woocommerce-Price-amount.amount");
+  const productPrice = parseFloat(
     price.innerText.replace(/[^\w,]/g, "").replace(",", ".")
   );
 
@@ -367,6 +367,6 @@ jQuery(function($) {
     interestRate: 0,
     campaignDuration: 30,
     campaignInterestRate: 0,
-    productPrice: productPrice
+    productPrice
   });
 });
