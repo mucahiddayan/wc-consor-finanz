@@ -351,22 +351,25 @@ var initLegalText;
 })(window, window.jQuery);
 
 jQuery(function($) {
-  const price =
+  const wc_consor_finanz_price =
     document.querySelector(
       ".summary .price ins .woocommerce-Price-amount.amount"
     ) ||
     document.querySelector(".summary .price .woocommerce-Price-amount.amount");
-  const productPrice = parseFloat(
-    price.innerText.replace(/[^\w,]/g, "").replace(",", ".")
-  );
 
-  $("#calculator").calculator({
-    minMonth: 6,
-    maxMonth: 50,
-    stepMonth: 6,
-    interestRate: 0,
-    campaignDuration: 30,
-    campaignInterestRate: 0,
-    productPrice
-  });
+  if (wc_consor_finanz_price) {
+    const productPrice = parseFloat(
+      wc_consor_finanz_price.innerText.replace(/[^\w,]/g, "").replace(",", ".")
+    );
+
+    $("#calculator").calculator({
+      minMonth: 6,
+      maxMonth: 50,
+      stepMonth: 6,
+      interestRate: 0,
+      campaignDuration: 30,
+      campaignInterestRate: 0,
+      productPrice
+    });
+  }
 });
